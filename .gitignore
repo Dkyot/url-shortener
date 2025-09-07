@@ -32,3 +32,6 @@ go.sum
 /examples/*/bin/
 /doc/
 /godoc/
+*.db
+*.sqlite
+*.sqlite3
