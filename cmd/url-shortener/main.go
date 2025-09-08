@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"url-shortener/internal/config"
 	"url-shortener/internal/http-server/handlers/url/save"
@@ -32,8 +33,6 @@ func main() {
 	// init config: cleanenv
 	cfg := config.MustLoad()
 
-	// fmt.Println(*cfg)
-
 	// init logger: slog
 	log := setupLogger(cfg.Env)
 
@@ -47,8 +46,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	_ = storage
-
 	// init router: chi, "chi render"
 	router := chi.NewRouter()
 
@@ -61,7 +58,22 @@ func main() {
 
 	router.Post("/url", save.New(log, storage))
 
-	// TODO: run server
+	// run server
+	log.Info("startingg server", slog.String("address", cfg.Address))
+
+	srv := &http.Server{
+		Addr:         cfg.Address,
+		Handler:      router,
+		ReadTimeout:  cfg.Timeout,
+		WriteTimeout: cfg.Timeout,
+		IdleTimeout:  cfg.IdleTimeout,
+	}
+
+	if err := srv.ListenAndServe(); err != nil { // block
+		log.Error("failed to start server")
+	}
+
+	log.Error("server stopped")
 }
 
 // go run ./cmd/url-shortener
